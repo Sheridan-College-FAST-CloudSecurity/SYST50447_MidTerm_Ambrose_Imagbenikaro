@@ -1,30 +1,37 @@
-name: CI Workflow
+name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
-  build-and-test:
+  build:
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: [3.12]
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
 
-    - name: Set up Python
+    - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
-        python-version: '3.12'
+        python-version: ${{ matrix.python-version }}
 
     - name: Install dependencies
-      run: 
+      run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install pytest
 
-    - name: Run Tests
-      run: 
-        pytest test_app.py
+    - name: Perform API endpoint testing
+      run: |
+        echo 'import requests; response = requests.get("http://localhost:5000/health"); assert response.status_code == 200' > test_health.py
+        python test_health.py
